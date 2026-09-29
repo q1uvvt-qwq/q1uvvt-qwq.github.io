@@ -1992,6 +1992,30 @@ window.WIKI = [
 							"防护"
 						],
 						"source": "攻击链最后形态/平原链攻击链指南.md、工控协议系统学习资料/协议攻击点布设模板.md、工控协议权威资料与学习方案.md"
+					},
+					{
+						"id": "02-Modbus/功能码总表",
+						"title": "功能码总表",
+						"path": "02-Modbus/功能码总表.md",
+						"order": null,
+						"tags": [],
+						"source": ""
+					},
+					{
+						"id": "02-Modbus/四类数据对象与地址问题",
+						"title": "四类数据对象与地址问题",
+						"path": "02-Modbus/四类数据对象与地址问题.md",
+						"order": null,
+						"tags": [],
+						"source": ""
+					},
+					{
+						"id": "02-Modbus/Modbus TCP 协议与报文分析",
+						"title": "Modbus TCP 协议与报文分析",
+						"path": "02-Modbus/Modbus TCP 协议与报文分析.md",
+						"order": null,
+						"tags": [],
+						"source": ""
 					}
 				],
 				"order": 2
@@ -2855,6 +2879,21 @@ window.WIKI = [
 					}
 				],
 				"order": 4
+			},
+			{
+				"id": "06-工控蜜罐学习",
+				"title": "工控蜜罐学习",
+				"children": [
+					{
+						"id": "06-工控蜜罐学习/工控前置",
+						"title": "工控前置",
+						"path": "06-工控蜜罐学习/工控前置.md",
+						"order": null,
+						"tags": [],
+						"source": ""
+					}
+				],
+				"order": 6
 			}
 		]
 	},

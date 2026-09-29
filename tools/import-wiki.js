@@ -67,6 +67,12 @@ const OUT_UPDATED = path.join(ROOT, 'assets/js/wiki-updated.js');
 // 本次导入实际复制进站点的文件里最新的源文件修改时间。网页上「最近更新时间」显示的就是它。
 let latestMs = 0;
 
+// 当前源的排除名单（见 SOURCES 的 exclude），以及这一遍扫到过的所有笔记路径。
+// 扫描时按前者跳过文件、往后者登记，扫完拿两者对一遍，就能揪出写错名字的排除项。
+let EXCLUDE = new Set();
+const SEEN = new Set();
+let excludedTotal = 0;
+
 const PARTITION_RE = /^\d{2}-/;
 
 /*
@@ -81,6 +87,9 @@ const PARTITION_RE = /^\d{2}-/;
               该分区必须由排在前面的源建出来
   allDirs     凡是有 .md 的子目录（含子目录）都当分区，空目录不进树；供目录名没有
               「数字-名称」前缀的源使用（写了它就不再按 PARTITION_RE 自动识别）
+  exclude     点名「永不导入」的文件，路径相对该源目录。规则进仓库、有版本，源文件
+              一动不动；写错名字（文件不存在、或不在任何会导入的分区里）直接报错——
+              静默不生效等于把本该留在本地的笔记推上公开站点，方向反了
   byTime      笔记缺 front-matter order 时按**文件时间**排，而不是退回文件名——
               给「按写作先后顺序读」的笔记用
 
@@ -90,7 +99,10 @@ const PARTITION_RE = /^\d{2}-/;
 const SOURCES = [
 	{ dir: 'D:/ctf', containers: ['web知识'] },
 	{ dir: 'D:/工控', group: '工控安全', after: 'web知识' },
-	{ dir: 'D:/蜜罐', group: '蜜罐研究', after: '工控安全' },
+	// 工控蜜罐学习/ 里那两篇是规划类文档，用户点名不公开，只留 工控前置 上站
+	{ dir: 'D:/蜜罐', group: '蜜罐研究', after: '工控安全',
+	  exclude: ['06-工控蜜罐学习/工控蜜罐前置学习任务.md',
+	            '06-工控蜜罐学习/工控蜜罐深入研究路线.md'] },
 	{ dir: 'D:/日志检测', group: '模型构建', after: '蜜罐研究' },
 	// 区块链安全：分区目录没有数字前缀，用 allDirs 把「有笔记的子目录」全收进来
 	// （空目录不进树）；笔记没有 front-matter，靠 byTime 按文件时间排（也就是写作顺序）
@@ -197,9 +209,13 @@ function scanDir(absDir, relDir, byTime) {
 			});
 		} else if (entry.name.toLowerCase().endsWith('.md')) {
 			const relFile = relDir ? path.join(relDir, entry.name) : entry.name;
+			const relPosix = toPosix(relFile);
+			SEEN.add(relPosix);
+			// 用户点名永不导入的（如只留在本地的规划稿），连读都不读
+			if (EXCLUDE.has(relPosix)) { excludedTotal++; continue; }
+
 			const fm = parseFrontMatter(fs.readFileSync(abs, 'utf8'));
 			const base = entry.name.replace(/\.md$/i, '');
-			const relPosix = toPosix(relFile);
 
 			notes.push({
 				id: relPosix.replace(/\.md$/i, ''),
@@ -260,12 +276,40 @@ function containerNode(srcDir, name, byTime) {
 // 扫一个源，把它的顶层节点推进 tree。
 // 带 group 的源多包一层容器；容器要排在 after 指的节点之后，所以锚点必须已经在 tree 里
 // （即来自先处理的源）。
+// 装上这一源的排除名单，并清空「扫到过什么」的记录
+function beginSource(src, dir) {
+	EXCLUDE = new Set(src.exclude || []);
+	SEEN.clear();
+	for (const rel of EXCLUDE) {
+		const abs = path.join(dir, rel.split('/').join(path.sep));
+		if (!fs.existsSync(abs) || !fs.statSync(abs).isFile()) {
+			fail('SOURCES 的 exclude 里写的不是文件：' + rel + '（在 ' + dir + ' 下）');
+		}
+	}
+}
+
+// 扫完之后核对：排除名单里的每一条都必须在某个会导入的分区里被扫到过。
+// 否则那个名字就是白写的——文件照样躺在源目录里，哪天目录一改名就可能被推上去。
+function endSource(src, dir) {
+	for (const rel of EXCLUDE) {
+		if (!SEEN.has(rel)) {
+			fail('SOURCES 的 exclude 指向的文件不在任何会导入的分区里：' + rel +
+				'（在 ' + dir + ' 下；名字写错了，它不会生效）');
+		}
+	}
+}
+
 function buildSource(src, tree) {
 	const dir = path.resolve(src.dir);
 	if (!fs.existsSync(dir)) fail('源目录不存在：' + dir);
+	beginSource(src, dir);
 
 	// 合并型源：不新建顶层节点，只把笔记挂到已有分区下
-	if (src.mergeInto) return mergeIntoTarget(src, dir, tree, src.byTime);
+	if (src.mergeInto) {
+		mergeIntoTarget(src, dir, tree, src.byTime);
+		endSource(src, dir);
+		return;
+	}
 
 	const containers = src.containers || [];
 	const byTime = !!src.byTime;
@@ -299,6 +343,7 @@ function buildSource(src, tree) {
 
 	if (!src.group) {
 		Array.prototype.push.apply(tree, nodes);
+		endSource(src, dir);
 		return;
 	}
 
@@ -311,6 +356,7 @@ function buildSource(src, tree) {
 		order: anchor.order + 0.25,   // 紧跟在锚点后面，两边编号各自从 00 起也不冲突
 		children: nodes
 	});
+	endSource(src, dir);
 }
 
 /* ---------- 合并进已有分区 ---------- */
@@ -382,6 +428,7 @@ function main() {
 	console.log('顶层     ：' + tree.map(n => n.title).join(' / '));
 	console.log('笔记数   ：' + noteCount);
 	console.log('图片数   ：' + assetCount);
+	if (excludedTotal) console.log('已排除   ：' + excludedTotal + ' 篇（SOURCES 的 exclude，只留在本地）');
 	console.log('最近更新 ：' + stamp(latestMs));
 	console.log('已写出   ：wiki/ 、assets/js/wiki-data.js 与 assets/js/wiki-updated.js');
 }
