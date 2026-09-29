@@ -3329,9 +3329,23 @@ window.WIKI = [
 		]
 	},
 	{
-		"id": "11-逻辑漏洞",
-		"title": "逻辑漏洞",
-		"children": []
+		"id": "11-漏洞挖掘",
+		"title": "漏洞挖掘",
+		"children": [
+			{
+				"id": "11-漏洞挖掘/ai-vulnerability-hunting-prompts-methods-survey",
+				"title": "AI 赋能漏洞挖掘：提示词与方法调研整合",
+				"path": "11-漏洞挖掘/ai-vulnerability-hunting-prompts-methods-survey.md",
+				"order": null,
+				"tags": [
+					"漏洞挖掘",
+					"AI",
+					"方法论",
+					"提示词"
+				],
+				"source": ""
+			}
+		]
 	},
 	{
 		"id": "13-实战与攻击链",

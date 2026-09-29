@@ -84,7 +84,7 @@
 		var box = document.createElement('div');
 		box.className = 'wiki-children';
 		if (node.children.length === 0) {
-			// 源里确实有空分区（11-逻辑漏洞），保留节点但说明清楚，
+			// 源里确实可能扫出空分区，保留节点但说明清楚，
 			// 免得点开是一片空白让人以为是加载失败。
 			var empty = document.createElement('p');
 			empty.className = 'wiki-empty';

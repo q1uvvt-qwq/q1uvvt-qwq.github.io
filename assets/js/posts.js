@@ -18,6 +18,13 @@
 
 window.POSTS = [
 	{
+		slug: 'ai-vulnerability-hunting-prompts-methods-survey',
+		title: 'AI 赋能漏洞挖掘：提示词与方法调研整合',
+		date: '2026-09-29',
+		tags: ['漏洞挖掘', 'AI', '方法论'],
+		summary: '公开证据并不支持一段神奇提示词就能自动挖出高质量漏洞：真正起作用的是范围约束、窄任务、工具反馈闭环，以及发现与验证的分离。'
+	},
+	{
 		slug: 'notes-opening',
 		title: '写在前面：为什么开始记录',
 		date: '2026-09-12',
