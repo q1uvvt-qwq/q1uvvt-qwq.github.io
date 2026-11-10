@@ -8,10 +8,11 @@
 	<head>
 		<title>71u</title>
 		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="description" content="71u 的个人笔记站，记录项目、技术与思考的全过程，专注安全、AI 与工程化。" />
 		<link rel="stylesheet" href="assets/css/main.css" />
 		<link rel="stylesheet" href="assets/css/wiki.css" />
+		<link rel="stylesheet" href="assets/css/maps.css" />
 		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
 	</head>
 	<body class="is-preload">
@@ -36,6 +37,7 @@
 								<li><a href="#intro">个人介绍</a></li>
 								<li><a href="#blog">博客</a></li>
 								<li><a href="#wiki">知识库</a></li>
+								<li><a href="#maps">知识地图</a></li>
 								<li><a href="#contact">联系我</a></li>
 							</ul>
 						</nav>
@@ -78,6 +80,36 @@
 								</div>
 							</article>
 
+						<!-- Knowledge map: shares the original Dimension article shell. -->
+							<article id="maps" aria-labelledby="maps-title">
+								<h2 class="major" id="maps-title">知识地图</h2>
+								<p class="maps-count" aria-live="polite">载入笔记…</p>
+								<nav class="maps-tabs" aria-label="知识领域"></nav>
+								<div class="maps-toolbar" aria-label="导图操作">
+									<button type="button" data-map-action="expand">展开</button>
+									<button type="button" data-map-action="collapse">收起</button>
+									<button type="button" data-map-action="fullscreen" aria-pressed="false">全屏</button>
+								</div>
+								<div class="maps-stage" tabindex="0" aria-label="可拖动的知识导图；双击空白适应屏幕，Ctrl 加滚轮缩放">
+									<div class="maps-canvas"></div>
+								</div>
+								<div class="maps-footer">
+									<div class="maps-downloads">
+										<a class="button" id="maps-download" href="maps/exports/overview.xmind" download>下载 XMind</a>
+										<button type="button" data-map-action="outline" aria-expanded="false">文字大纲</button>
+									</div>
+									<p class="maps-hint">点击节点查看一句话总结</p>
+								</div>
+								<div class="maps-outline" hidden></div>
+								<div class="maps-popover" role="dialog" aria-modal="false" aria-labelledby="maps-popover-title" hidden>
+									<button type="button" class="maps-popover-close" aria-label="关闭知识总结"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 4L16 16M16 4L4 16" /></svg></button>
+									<h3 id="maps-popover-title"></h3>
+									<p class="maps-summary"></p>
+									<a class="maps-read" href="#wiki">阅读完整笔记</a>
+								</div>
+								<p class="maps-message" role="status" hidden></p>
+							</article>
+
 						<!-- Contact -->
 							<article id="contact">
 								<h2 class="major">联系我</h2>
@@ -113,6 +145,7 @@
 			<script src="assets/js/wiki-data.js"></script>
 			<script src="assets/js/wiki-updated.js"></script>
 			<script src="assets/js/wiki.js"></script>
+			<script src="assets/js/maps.js"></script>
 			<script src="assets/js/main.js"></script>
 
 	</body>

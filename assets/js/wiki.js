@@ -9,8 +9,8 @@
 	index.html 与本文件的体积都不随笔记数量增长。
 
 	与 blog.js 的区别：知识库是 index.html 里的静态 <article id="wiki">，
-	没有「动态建壳必须先于 main.js」的时序约束；单篇笔记也不做深链
-	（点笔记不改变 location.hash，只切换右侧内容）。
+	没有「动态建壳必须先于 main.js」的时序约束；单篇笔记用 ?note=<id>#wiki
+	做深链，保留原模板的 article 哈希路由。
 */
 (function () {
 	'use strict';
@@ -34,6 +34,13 @@
 
 	var currentId = null;   // 当前选中笔记的 id
 	var loaded = {};        // id -> 原始 Markdown，已成功载入过的正文
+	var noteIndex = new Map();
+	(function index(nodes) {
+		nodes.forEach(function (node) {
+			if (node.children) index(node.children);
+			else noteIndex.set(node.id, node);
+		});
+	})(TREE);
 
 	/* ---------- 展开状态（localStorage） ---------- */
 
@@ -102,13 +109,20 @@
 	function buildNote(node) {
 		var link = document.createElement('a');
 		link.className = 'wiki-note';
-		link.href = '#wiki';
+		var target = new URL(location.href);
+		target.searchParams.set('note', node.id);
+		target.hash = 'wiki';
+		link.href = target.pathname + target.search + target.hash;
 		link.dataset.id = node.id;
 		link.textContent = node.title;
 		link.addEventListener('click', function (event) {
+			if (event.button || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
 			// 知识库页本身已经由 #wiki 打开，这里不必再动哈希——动反而会
 			// 让 main.js 的哈希路由重放一次展开动画。
 			event.preventDefault();
+			var url = new URL(location.href);
+			url.searchParams.set('note', node.id); url.hash = 'wiki';
+			history.pushState(null, '', url.pathname + url.search + url.hash);
 			select(node, link);
 		});
 		return link;
@@ -162,6 +176,21 @@
 
 	function showNote(node, markdown) {
 		bodyEl.textContent = '';
+		var fromMap = new URL(location.href).searchParams.get('fromMap');
+		if (fromMap) {
+			var backLine = document.createElement('p'); backLine.className = 'wiki-map-back';
+			var back = document.createElement('a'); back.textContent = '← 返回知识地图';
+			var backUrl = new URL(location.href);
+			backUrl.searchParams.delete('note'); backUrl.searchParams.delete('fromMap');
+			backUrl.searchParams.set('map', fromMap); backUrl.hash = 'maps';
+			back.href = backUrl.pathname + backUrl.search + backUrl.hash;
+			back.addEventListener('click', function (event) {
+				if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+				event.preventDefault(); history.pushState(null, '', back.href);
+				window.dispatchEvent(new HashChangeEvent('hashchange'));
+			});
+			backLine.appendChild(back); bodyEl.appendChild(backLine);
+		}
 
 		// article 已有 h2.major「知识库」，所以笔记标题用 h3。
 		var title = document.createElement('h3');
@@ -275,4 +304,32 @@
 	}
 
 	treeEl.appendChild(buildBranch(TREE, readOpen()));
+
+	function selectFromUrl() {
+		if (location.hash !== '#wiki') return;
+		var id = new URL(location.href).searchParams.get('note');
+		if (!id) return;
+		var node = noteIndex.get(id);
+		if (!node) { showLoadError('未找到这篇笔记'); return; }
+		var link = Array.prototype.find.call(treeEl.querySelectorAll('.wiki-note'), function (el) { return el.dataset.id === id; });
+		if (link) {
+			var parent = link.parentElement;
+			while (parent && parent !== treeEl) {
+				if (parent.tagName === 'DETAILS') parent.open = true;
+				parent = parent.parentElement;
+			}
+		}
+		if (currentId === id && loaded[id]) showNote(node, loaded[id]);
+		else select(node, link);
+	}
+	window.KnowledgeWiki = { open: function (id, fromMap) {
+		if (!noteIndex.has(id)) return;
+		var url = new URL(location.href); url.searchParams.set('note', id);
+		if (fromMap) url.searchParams.set('fromMap', fromMap);
+		url.hash = 'wiki'; history.pushState(null, '', url.pathname + url.search + url.hash);
+		window.dispatchEvent(new HashChangeEvent('hashchange'));
+	} };
+	window.addEventListener('hashchange', selectFromUrl);
+	window.addEventListener('popstate', selectFromUrl);
+	selectFromUrl();
 })();

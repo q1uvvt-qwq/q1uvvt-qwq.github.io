@@ -319,6 +319,7 @@
 				switch (event.keyCode) {
 
 					case 27:
+						if (window.KnowledgeMap && window.KnowledgeMap.consumeEscape()) break;
 
 						// Article visible? Hide.
 							if ($body.hasClass('is-article-visible'))

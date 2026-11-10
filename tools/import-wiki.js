@@ -501,3 +501,4 @@ function writeUpdated() {
 }
 
 main();
+require('./build-maps.cjs').build();
